@@ -175,7 +175,7 @@ def main():
 		_parsed_feeds = _check_rss(_parsed_feeds)
 		_queue = _check_queue(_queue)
 		_write_file(_parsed_feeds, FEEDFILE)
-		print(_stat('Next check at %s.' % ((datetime.now() + timedelta(0,UPDATEINTERVAL)).isoformat(' '))))
+		print(_stat('Next check at %s.' % ((datetime.now() + timedelta(0,UPDATEINTERVAL)).isoformat(' ')[:-7])))
 		time.sleep(UPDATEINTERVAL)
 
 if __name__ == '__main__':
