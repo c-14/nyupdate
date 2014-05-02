@@ -8,6 +8,7 @@ import time
 import sys
 import signal
 import os
+from datetime import datetime, timedelta
 
 BASEDIR = os.path.expanduser('~/.nyupdate/')
 FEEDFILE = BASEDIR + 'feeds'
@@ -174,7 +175,7 @@ def main():
 		_parsed_feeds = _check_rss(_parsed_feeds)
 		_queue = _check_queue(_queue)
 		_write_file(_parsed_feeds, FEEDFILE)
-		print(_stat('Checking again in %.2f minutes.' % (UPDATEINTERVAL / 60)))
+		print(_stat('Next check at %s.' % ((datetime.now() + timedelta(0,UPDATEINTERVAL)).isoformat(' '))))
 		time.sleep(UPDATEINTERVAL)
 
 if __name__ == '__main__':
