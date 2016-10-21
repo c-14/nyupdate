@@ -9,6 +9,7 @@ import sys
 import signal
 import os
 from datetime import datetime, timedelta
+from tempfile import NamedTemporaryFile
 
 BASEDIR = os.path.expanduser('~/.nyupdate/')
 FEEDFILE = BASEDIR + 'feeds'
@@ -24,6 +25,10 @@ STATUSC = '\033[34m'
 OKC = '\033[32m'
 ENDC = '\033[0m'
 
+AGENT = ''
+COOKIES = "" 
+HEADERS = {'Cookie' : COOKIES }
+
 INVALIDFEED = 'RSS-Feed: %s is not reachable or invalid!'
 VALIDFEED = 'RSS-Feed: %s is now being processed!'
 INVALIDLINE = 'Line: %s in %s is invalid!'
@@ -38,7 +43,7 @@ def _ok(string):
 	return OKC + string + ENDC
 
 def _get_torrents(url):
-	rssfeed = feedparser.parse(url)
+	rssfeed = feedparser.parse(url, agent=AGENT, request_headers=HEADERS)
 	if not bool(rssfeed.bozo):
 		return { entry.link : entry.title for entry in rssfeed.entries }
 	else:
@@ -94,11 +99,14 @@ def _check_rss(feeds):
 	return feeds
 
 def _addtorrent(url):
-	exitcode = subprocess.call(['transmission-remote', '--add', url])
+	torr = NamedTemporaryFile()
+	exitcode = subprocess.call(['curl', '-#L', '-A', AGENT, '-b', COOKIES, '-o', torr.name, url])
 	for i in (j for j in range(RETRYATTEMPTS - 1) if bool(exitcode)):
-		print(_err('Failed to queue torrent, retrying in %d seconds.' % RETRYINTERVAL))
+		print(_err('Failed to curl torrent, retrying in %d seconds.' % RETRYINTERVAL))
 		time.sleep(RETRYINTERVAL)
-		exitcode = subprocess.call(['transmission-remote', '--add', url])
+		exitcode = subprocess.call(['curl', '-#L', '-A', AGENT, '-b', COOKIES, '-o', torr.name, url])
+	exitcode = subprocess.call(['transmission-remote', '--add', torr.name])
+	torr.close()
 	return not bool(exitcode)
 
 def _read_file(dfile):
